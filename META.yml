@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:               Dumbbench
-version:            0.01
+version:            0.02
 abstract:           Perl extension more reliable benchmarking
 author:
     - Steffen Mueller <smueller@cpan.org>
@@ -15,6 +15,7 @@ requires:
     Carp:               0
     Class::XSAccessor:  1.05
     Number::WithError:  0
+    Params::Util:       0
     Time::HiRes:        0
 no_index:
     directory:
