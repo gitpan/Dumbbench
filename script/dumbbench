@@ -1,0 +1,136 @@
+#!/usr/bin/perl
+use strict;
+use warnings;
+use Dumbbench;
+use Time::HiRes qw/time/;
+use Getopt::Long qw/GetOptions/;
+
+sub usage {
+  my $msg = shift;
+  print "$msg\n\n" if defined $msg;
+
+  print <<USAGE;
+Usage: $0 [options] -- command with arguments
+Ore:   $0 [options] --code='Perl-code-to-benchmark'
+
+For a full manual of the underlying module, see
+"perldoc Dumbbench"
+
+Options:
+ -p=X
+ --precision=X     Set the target precision (default: 0.10=10%)
+                   Set to 0 to disable.
+ -a=x
+ --absprecision=X  Set the target absolute precision (default: 0)
+                   Set to 0 to disable.
+ -v|--verbose      Increase verbosity. Increases up to three times.
+ -i=X|--initial=X  Set number of initial timing runs (default: 20)
+                   Increase, not decrease this number if possible.
+ -m=X|--maxiter=X  Set a hard maximum number of iterations (default:1000)
+                   If this hard limit is hit, the precision is off.
+ --raw             Set raw output mode. Only the final count will be
+                   printed to stdout.
+ -s|--std          Use the standard deviation instead of the MAD as a
+                   measure of variability.
+ --code='code'     Benchmarks Perl code (can be specified multiple times
+                   for multiple benchmarks)
+USAGE
+  exit(1);
+}
+
+
+our $RelPrecision    = 0.10;
+our $AbsPrecision    = 0;
+our $V               = 0;
+our $InitialTimings  = 20; # more or less arbitrary but can't be much smaller than 6-7 on fundamental grounds
+our $DryRunCmd;
+our $MaxIter         = 1000;
+our $RawOutput       = 0;
+our $UseStdDeviation = 0;
+our $PlotTimings     = 0; # hidden option since virtually nobody has SOOT
+our @Code;
+
+Getopt::Long::Configure('bundling');
+GetOptions(
+  'h|help'           => \&usage,
+  'p|precision=f'    => \$RelPrecision,
+  'a|absprecision=f' => \$AbsPrecision,
+  'v|verbose+'       => \$V,
+  'i|initial=i'      => \$InitialTimings,
+  'm|maxiter=i'      => \$MaxIter,
+  'raw'              => \$RawOutput,
+  's|std'            => \$UseStdDeviation,
+  'd|dryrun=s'       => \$DryRunCmd,
+  'plot_timings'     => \$PlotTimings,
+  'code=s'           => \@Code,
+);
+
+if ($RawOutput) {
+  $V = 0;
+}
+
+usage() if not @Code and not @ARGV;
+
+my @CMD = @ARGV;
+
+if ($PlotTimings) {
+  eval "use SOOT";
+  die "Timing distribution plots require the SOOT module" if $@;
+  require Capture::Tiny;
+  my @discarded = Capture::Tiny::capture(sub {
+    SOOT::Init(1);
+  });
+}
+
+my $bench = Dumbbench->new(
+  target_rel_precision => $RelPrecision,
+  target_abs_precision => $AbsPrecision,
+  initial_runs         => $InitialTimings,
+  max_iterations       => $MaxIter,
+  variability_measure  => ($UseStdDeviation ? 'std_dev' : 'mad_dev' ),
+);
+
+if (@CMD) {
+  $bench->add_instances(
+    Dumbbench::Instance::Cmd->new(
+      name    => 'cmd',
+      command => \@CMD,
+      (defined $DryRunCmd ? (dry_run_command => $DryRunCmd) : ()),
+    ),
+  );
+}
+if (@Code) {
+  my $i = 0;
+  $bench->add_instances(
+    map {
+      $i++;
+      Dumbbench::Instance::PerlEval->new(
+        name => 'code' . $i,
+        code => $Code[$i-1],
+      ),
+    } @Code
+  );
+}
+
+$bench->run;
+
+$bench->report($RawOutput);
+
+if ($PlotTimings) {
+  foreach my $instance ($bench->instances) {
+    foreach my $src (qw(dry_timings_as_histogram timings_as_histogram)) {
+      my $hist = $instance->$src;
+      if (defined $hist) {
+        my $cv = TCanvas->new->keep;
+        $cv->cd;
+        $hist->Draw;
+        $hist->keep;
+        $cv->Update;
+      }
+    }
+  }
+
+  defined($SOOT::gApplication) && 1; # silence warnings;
+  $SOOT::gApplication->Run();
+}
+
