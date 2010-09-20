@@ -4,7 +4,7 @@ use warnings;
 use Carp ();
 use Time::HiRes ();
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 require Dumbbench::Result;
 require Dumbbench::Stats;
@@ -248,13 +248,21 @@ sub report {
   }
 }
 
+sub box_plot {
+  my $self = shift;
+  eval "require Dumbbench::BoxPlot;";
+  return() if $@;
+
+  return Dumbbench::BoxPlot->new($self);
+}
+
 1;
 
 __END__
 
 =head1 NAME
 
-Dumbbench - Perl extension more reliable benchmarking
+Dumbbench - More reliable benchmarking with the least amount of thinking
 
 =head1 SYNOPSIS
 
