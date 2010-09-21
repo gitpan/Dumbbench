@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:               Dumbbench
-version:            0.03
+version:            0.04
 abstract:           More reliable benchmarking with the least amount of thinking
 author:
     - Steffen Mueller <smueller@cpan.org>
@@ -14,7 +14,7 @@ requires:
     Capture::Tiny:      0
     Carp:               0
     Class::XSAccessor:  1.05
-    Number::WithError:  0
+    Number::WithError:  1.00
     Params::Util:       0
     parent:             0
     Time::HiRes:        0
@@ -22,6 +22,10 @@ no_index:
     directory:
         - t
         - inc
+        - t
+        - inc
+        - simulator
+        - xt
 generated_by:       ExtUtils::MakeMaker version 6.56
 meta-spec:
     url:      http://module-build.sourceforge.net/META-spec-v1.4.html

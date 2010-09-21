@@ -4,7 +4,7 @@ use warnings;
 use Carp ();
 use Time::HiRes ();
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 require Dumbbench::Result;
 require Dumbbench::Stats;
@@ -21,6 +21,7 @@ use Class::XSAccessor {
     variability_measure
     started
     outlier_rejection
+    subtract_dry_run
   )],
   accessors => [qw(verbosity)],
 };
@@ -40,7 +41,8 @@ sub new {
       variability_measure  => 'mad',
       instances            => [],
       started              => 0,
-      outlier_rejection    => 2.5,
+      outlier_rejection    => 3,
+      subtract_dry_run     => 1,
       @_,
     } => $class;
   }
@@ -85,7 +87,7 @@ sub instances {
 sub run {
   my $self = shift;
   Carp::croak("Can't re-run same benchmark instance") if $self->started;
-  $self->dry_run_timings;
+  $self->dry_run_timings if $self->subtract_dry_run;
   $self->run_timings;
 }
 
@@ -164,18 +166,12 @@ sub _run {
   my $n_good = 0;
   my $variability_measure = $self->variability_measure;
   while (1) {
-    $sigma = $stats->$variability_measure();# / sqrt(scalar(@timings));
-    $mean  = $stats->mean();
-    my $median = $stats->median();
-    my $outlier_rejection = $self->outlier_rejection;
-    my @t;
-    if ($outlier_rejection) {
-      @t = grep {abs($_-$median) < $outlier_rejection*$sigma} @timings;
-    }
-    else {
-      @t = @timings; # doh
-    }
-    $n_good = @t;
+    my ($good, $outliers) = $stats->filter_outliers(
+      variability_measure => $variability_measure,
+      nsigma_outliers     => $self->outlier_rejection,
+    );
+
+    $n_good = @$good;
 
     if (not $n_good and @timings == $max_iterations) {
       $mean = 0; $sigma = 0;
@@ -183,8 +179,8 @@ sub _run {
     }
     
     if ($n_good) {
-      my $new_stats = Dumbbench::Stats->new(data => \@t);
-      $sigma = $new_stats->$variability_measure() / sqrt(scalar(@t));
+      my $new_stats = Dumbbench::Stats->new(data => $good);
+      $sigma = $new_stats->$variability_measure() / sqrt($n_good);
       $mean = $new_stats->mean();
 
       # stop condition
@@ -204,7 +200,10 @@ sub _run {
       last if not $need_iter or @timings == $max_iterations;
     }
 
-    push @timings, ($dry ? $instance->single_dry_run() : $instance->single_run());
+    # progressively run more new timings in one go. Otherwise,
+    # we start to stall on the O(n*log(n)) complexity of the median.
+    my $n = List::Util::max(1, @timings*0.05);
+    push @timings, ($dry ? $instance->single_dry_run() : $instance->single_run()) for 1..$n;
   } # end while more data required
 
   if (@timings == $max_iterations and not $dry) {
@@ -223,7 +222,8 @@ sub _run {
   }
   else {
     $instance->{timings} = \@timings;
-    $result -= $instance->dry_result if defined $instance->dry_result;
+    $result -= $instance->dry_result
+      if defined $instance->dry_result and $self->subtract_dry_run;
     $instance->result($result);
   }
 }
@@ -237,8 +237,8 @@ sub report {
     if (not $raw) {
       my $mean = $result->raw_number;
       my $sigma = $result->raw_error->[0];
-      print "Ran " . scalar(@{$instance->timings}) . " iterations of the command.\n";
-      print "Rejected " . (scalar(@{$instance->timings})-$result->nsamples) . " samples as outliers.\n";
+      print "Ran " . scalar(@{$instance->timings}) . " iterations ("
+        . (scalar(@{$instance->timings})-$result->nsamples) . " outliers).\n";
       print "Rounded run time per iteration: $result" . sprintf(" (%.1f%%)\n", $sigma/$mean*100);
       print "Raw:                            $mean +/- $sigma\n" if $self->verbosity;
     }
@@ -314,6 +314,9 @@ the resulting uncertainty and goes through some pain to discard bad runs and sub
 overhead from the timings. The reported timing includes an uncertainty, so that multiple
 benchmarks can more easily be compared.
 
+Please note that C<Dumbbench> works entirely with wallclock time as reported by
+C<Time::HiRes>' C<time()> function.
+
 =head1 METHODS
 
 In addition to the methods listed here, there are read-only
@@ -330,7 +333,7 @@ Constructor that takes the following arguments (with defaults):
   intial_runs          => 20,    # no. of guaranteed initial runs
   max_iterations       => 10000, # hard max. no of iterations
   variability_measure  => 'mad', # method for calculating uncertainty
-  outlier_rejection    => 2.5,   # no. of "sigma"s for the outlier rejection
+  outlier_rejection    => 3,     # no. of "sigma"s for the outlier rejection
 
 C<variability_measure> and C<outlier_rejection> probably make sense
 after reading C<HOW IT WORKS> below.

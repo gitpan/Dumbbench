@@ -6,7 +6,7 @@ WriteMakefile(
     NAME              => 'Dumbbench',
     VERSION_FROM      => 'lib/Dumbbench.pm', # finds $VERSION
     PREREQ_PM         => {
-      'Number::WithError' => '0',
+      'Number::WithError' => '1.00',
       'Class::XSAccessor' => '1.05',
       'Carp'              => '0',
       'Time::HiRes'       => '0',
@@ -17,4 +17,10 @@ WriteMakefile(
     ($] >= 5.005 ?     ## Add these new keywords supported since 5.005
       (ABSTRACT_FROM  => 'lib/Dumbbench.pm', # retrieve abstract from module
        AUTHOR         => 'Steffen Mueller <smueller@cpan.org>') : ()),
+    EXE_FILES => ['bin/dumbbench'],
+    META_MERGE => {
+      no_index => {
+        directory => [qw(t inc simulator xt)],
+      },
+    },
 );
