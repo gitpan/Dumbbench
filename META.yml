@@ -1,32 +1,33 @@
---- #YAML:1.0
-name:               Dumbbench
-version:            0.04
-abstract:           More reliable benchmarking with the least amount of thinking
+---
+abstract: 'More reliable benchmarking with the least amount of thinking'
 author:
-    - Steffen Mueller <smueller@cpan.org>
-license:            unknown
-distribution_type:  module
-configure_requires:
-    ExtUtils::MakeMaker:  0
+  - 'Steffen Mueller <smueller@cpan.org>'
 build_requires:
-    ExtUtils::MakeMaker:  0
-requires:
-    Capture::Tiny:      0
-    Carp:               0
-    Class::XSAccessor:  1.05
-    Number::WithError:  1.00
-    Params::Util:       0
-    parent:             0
-    Time::HiRes:        0
-no_index:
-    directory:
-        - t
-        - inc
-        - t
-        - inc
-        - simulator
-        - xt
-generated_by:       ExtUtils::MakeMaker version 6.56
+  ExtUtils::MakeMaker: 0
+configure_requires:
+  ExtUtils::MakeMaker: 0
+dynamic_config: 1
+generated_by: 'ExtUtils::MakeMaker version 6.58, CPAN::Meta::Converter version 2.110930'
+license: unknown
 meta-spec:
-    url:      http://module-build.sourceforge.net/META-spec-v1.4.html
-    version:  1.4
+  url: http://module-build.sourceforge.net/META-spec-v1.4.html
+  version: 1.4
+name: Dumbbench
+no_index:
+  directory:
+    - t
+    - inc
+    - t
+    - inc
+    - simulator
+    - xt
+requires:
+  Capture::Tiny: 0
+  Carp: 0
+  Class::XSAccessor: 1.05
+  Number::WithError: 1.00
+  Params::Util: 0
+  Statistics::CaseResampling: 0.06
+  Time::HiRes: 0
+  parent: 0
+version: 0.05

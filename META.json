@@ -1,0 +1,52 @@
+{
+   "abstract" : "More reliable benchmarking with the least amount of thinking",
+   "author" : [
+      "Steffen Mueller <smueller@cpan.org>"
+   ],
+   "dynamic_config" : 1,
+   "generated_by" : "ExtUtils::MakeMaker version 6.58, CPAN::Meta::Converter version 2.110930",
+   "license" : [
+      "unknown"
+   ],
+   "meta-spec" : {
+      "url" : "http://search.cpan.org/perldoc?CPAN::Meta::Spec",
+      "version" : "2"
+   },
+   "name" : "Dumbbench",
+   "no_index" : {
+      "directory" : [
+         "t",
+         "inc",
+         "t",
+         "inc",
+         "simulator",
+         "xt"
+      ]
+   },
+   "prereqs" : {
+      "build" : {
+         "requires" : {
+            "ExtUtils::MakeMaker" : 0
+         }
+      },
+      "configure" : {
+         "requires" : {
+            "ExtUtils::MakeMaker" : 0
+         }
+      },
+      "runtime" : {
+         "requires" : {
+            "Capture::Tiny" : 0,
+            "Carp" : 0,
+            "Class::XSAccessor" : "1.05",
+            "Number::WithError" : "1.00",
+            "Params::Util" : 0,
+            "Statistics::CaseResampling" : "0.06",
+            "Time::HiRes" : 0,
+            "parent" : 0
+         }
+      }
+   },
+   "release_status" : "stable",
+   "version" : "0.05"
+}

@@ -4,7 +4,7 @@ use warnings;
 use Carp ();
 use Time::HiRes ();
 
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 require Dumbbench::Result;
 require Dumbbench::Stats;
@@ -208,6 +208,13 @@ sub _run {
 
   if (@timings == $max_iterations and not $dry) {
     print "Reached maximum number of iterations. Stopping. Precision not reached.\n";
+  }
+
+  # rescale sigma
+  # This is necessary since by cutting everything outside of n-sigma,
+  # we artificially reduce the variability of the main distribution.
+  if ($self->outlier_rejection) {
+    # TODO implement
   }
 
   my $result = Dumbbench::Result->new(
@@ -489,7 +496,7 @@ Steffen Mueller, E<lt>smueller@cpan.orgE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2010 by Steffen Mueller
+Copyright (C) 2010, 2011 by Steffen Mueller
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.8.1 or,

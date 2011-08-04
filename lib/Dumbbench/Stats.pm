@@ -2,16 +2,17 @@ package Dumbbench::Stats;
 use strict;
 use warnings;
 use List::Util ();
+use Statistics::CaseResampling ();
 
 use Class::XSAccessor {
   constructor => 'new',
   accessors => [qw/data name/],
 };
 
-# note: This is entirely unoptimized. There is a lot of unnecessary
-#       sorting going on. This is to allow the user to modify the data
+# Note: This is entirely unoptimized. There is a lot of unnecessary
+#       stuff going on. This is to allow the user to modify the data
 #       set in flight. If this comes back to haunt us at some point,
-#       we can still optimize.
+#       we can still optimize, but at this point, convenience still wins.
 
 sub sorted_data {
   my $self = shift;
@@ -19,49 +20,12 @@ sub sorted_data {
   return $sorted;
 }
 
-sub first_quartile {
-  my $self = shift;
-  my @data = sort { $a <=> $b } @{$self->data}; # would be much faster to cache the order...
-  # inlined median to avoid really silly re-sorting.
-  return() if not @data;
-
-  my $n = @data;
-  splice(@data, int($n/2));
-  #splice(@data, 0, int($n/2));
-  $n = @data;
-  if ($n % 2) { # odd
-    return $data[int($n/2)];
-  }
-  else {
-    my $half = $n/2;
-    return 0.5*($data[$half]+$data[$half-1]);
-  }
-}
-
+sub first_quartile { Statistics::CaseResampling::first_quartile($_[0]->data) }
 sub second_quartile { return $_[0]->median }
+sub third_quartile { Statistics::CaseResampling::third_quartile($_[0]->data) }
 
-sub third_quartile {
-  my $self = shift;
-  my @data = sort { $a <=> $b } @{$self->data}; # would be much faster to cache the order...
-  # inlined median to avoid really silly re-sorting.
-  return() if not @data;
 
-  my $n = @data;
-  #splice(@data, int($n/2));
-  splice(@data, 0, int($n/2));
-  $n = @data;
-  if ($n % 2) { # odd
-    return $data[int($n/2)];
-  }
-  else {
-    my $half = $n/2;
-    return 0.5*($data[$half]+$data[$half-1]);
-  }
-}
-
-sub n {
-  return scalar(@{$_[0]->data});
-}
+sub n { scalar(@{$_[0]->data}) }
 
 sub sum {
   my $self = shift;
@@ -83,26 +47,24 @@ sub mean {
   return $self->sum / $self->n;
 }
 
-sub median {
+sub median { Statistics::CaseResampling::median($_[0]->data) } # O(n)!
+
+sub median_confidence_limits {
   my $self = shift;
-  my @data = sort { $a <=> $b } @{$self->data}; # would be much faster to cache the order...
-  #@$data = sort { $a <=> $b } @$data;
-  return() if not @data;
-  my $n = @data;
-  if ($n % 2) { # odd
-    return $data[int($n/2)];
-  }
-  else {
-    my $half = $n/2;
-    return 0.5*($data[$half]+$data[$half-1]);
-  }
+  my $nsigma = shift;
+  my $alpha = Statistics::CaseResampling::nsigma_to_alpha($nsigma);
+  # note: The 1000 here is kind of a lower limit for reasonable accuracy.
+  #       But if the data set is small, that's more significant. If the data
+  #       set is VERY large, then running much more than 1k resamplings
+  #       is VERY expensive. So 1k is probably a reasonable default.
+  return Statistics::CaseResampling::median_simple_confidence_limits($self->data, 1-$alpha, 1000)
 }
 
 sub mad {
   my $self = shift;
   my $median = $self->median;
   my @val = map {abs($_ - $median)} @{$self->data};
-  return ref($self)->new(data => \@val)->median();
+  return ref($self)->new(data => \@val)->median;
 }
 
 sub mad_dev {
@@ -113,7 +75,7 @@ sub mad_dev {
 sub std_dev {
   my $self = shift;
   my $data = $self->data;
-  my $mean = $self->mean();
+  my $mean = $self->mean;
   my $var = 0;
   $var += ($_-$mean)**2 for @$data;
   $var /= @$data - 1;
