@@ -4,7 +4,7 @@ use warnings;
 use Carp ();
 use Time::HiRes ();
 
-our $VERSION = '0.07';
+our $VERSION = '0.08';
 
 require Dumbbench::Result;
 require Dumbbench::Stats;
@@ -480,6 +480,8 @@ Finally, the use the mean of the truncated distribution as the expectation
 value and the MAD of the truncated distribution as a measure of variability.
 To get the uncertainty on the expectation value, we take C<MAD / sqrt($N)> where
 C<$N> is the number of remaining measurements.
+
+=back
 
 =head2 Conclusion
 

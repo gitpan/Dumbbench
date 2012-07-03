@@ -17,4 +17,5 @@ t/010_stats.t
 t/100_bdumb.t
 xt/at_000_eval_vs_sub.t
 xt/at_000_external_vs_eval.t
-META.yml                                 Module meta-data (added by MakeMaker)
+META.yml                                 Module YAML meta-data (added by MakeMaker)
+META.json                                Module JSON meta-data (added by MakeMaker)
