@@ -1,5 +1,9 @@
 Revision history for Perl extension Dumbbench.
 
+0.09 Thu Feb 14 00:29:07 CST 2013 (brian d foy)
+  - add the --package feature to take instance subs from a package
+  - add --table feature to output raw timings as a table suitable for R
+
 0.08  Tue Jul 03 08:00 2012
   - POD fix (Eduardo Ariño de la Rubia)
 
