@@ -7,7 +7,7 @@ build_requires:
 configure_requires:
   ExtUtils::MakeMaker: 0
 dynamic_config: 1
-generated_by: 'ExtUtils::MakeMaker version 6.62, CPAN::Meta::Converter version 2.112150'
+generated_by: 'ExtUtils::MakeMaker version 6.64, CPAN::Meta::Converter version 2.120921'
 license: unknown
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
@@ -25,6 +25,7 @@ requires:
   Capture::Tiny: 0
   Carp: 0
   Class::XSAccessor: 1.05
+  Devel::CheckOS: 0
   Number::WithError: 1.00
   Params::Util: 0
   Statistics::CaseResampling: 0.06
